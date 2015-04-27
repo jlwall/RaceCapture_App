@@ -80,7 +80,7 @@ android.permissions = INTERNET, BLUETOOTH, BLUETOOTH_ADMIN , WRITE_EXTERNAL_STOR
 #android.sdk_path =
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-#android.p4a_dir =
+android.p4a_dir = ../python-for-android
 
 # (list) python-for-android whitelist
 #android.p4a_whitelist =
