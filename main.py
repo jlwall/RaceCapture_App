@@ -8,6 +8,8 @@ if __name__ == '__main__' and sys.platform == 'win32':
     freeze_support()
 
 if __name__ == '__main__':
+    import pyximport; pyximport.install()
+        
     import logging
     import argparse
     import kivy
