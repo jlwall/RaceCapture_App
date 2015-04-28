@@ -33,7 +33,7 @@ version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
 # comma seperated e.g. requirements = sqlite3, kivy, pygments
-requirements = kivy, sqlite3
+requirements = kivy, sqlite3, racecaptureapp
 
 # (list) Garden requirements
 #garden_requirements =
@@ -80,7 +80,7 @@ android.permissions = INTERNET, BLUETOOTH, BLUETOOTH_ADMIN , WRITE_EXTERNAL_STOR
 #android.sdk_path =
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-android.p4a_dir = ../python-for-android
+android.p4a_dir = /home/brent/git-projects/python-for-android
 
 # (list) python-for-android whitelist
 #android.p4a_whitelist =
@@ -144,7 +144,7 @@ android.wakelock = True
 [buildozer]
 
 # (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
-log_level = 1
+log_level = 2
 
 # (int) Display warning if buildozer is run as root (0 = False, 1 = True)
 warn_on_root = 1
