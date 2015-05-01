@@ -2,6 +2,8 @@
 __version__ = "1.3.0"
 import sys
 import os
+from blah.testit import Foooo
+from blah.test2 import Barrr
 
 if __name__ == '__main__' and sys.platform == 'win32':
     from multiprocessing import freeze_support
@@ -9,7 +11,6 @@ if __name__ == '__main__' and sys.platform == 'win32':
 
 if __name__ == '__main__':
     #import pyximport; pyximport.install()
-        
     import logging
     import argparse
     import kivy
@@ -260,7 +261,11 @@ class RaceCaptureApp(App):
     def on_stop(self):
         self._rc_api.cleanup_comms()
 
+    
     def build(self):
+        x = Foooo(tick=1234)
+        y = Barrr(tock=2333)
+        
         Builder.load_file('racecapture.kv')
         statusBar = kvFind(self.root, 'rcid', 'statusbar')
         statusBar.bind(on_main_menu=self.on_main_menu)
