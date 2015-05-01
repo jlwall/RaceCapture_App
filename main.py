@@ -6,15 +6,16 @@ import os
 if __name__ == '__main__' and sys.platform == 'win32':
     from multiprocessing import freeze_support
     freeze_support()
-
-if __name__ == '__main__' and sys.platform == 'linux':
-    import pyximport; pyximport.install()
     
 if __name__ == '__main__':
     
     import logging
     import argparse
     import kivy
+    from utils import *
+    if is_mobile_platform() == False:
+        import pyximport; pyximport.install()
+    
     from kivy.properties import AliasProperty
     from functools import partial
     from kivy.clock import Clock
@@ -28,7 +29,6 @@ if __name__ == '__main__':
     from kivy.uix.label import Label
     from kivy.uix.popup import Popup
     from kivy.uix.screenmanager import *
-    from utils import *
     from installfix_garden_navigationdrawer import NavigationDrawer
     from autosportlabs.racecapture.views.util.alertview import alertPopup, confirmPopup
     from autosportlabs.racecapture.views.tracks.tracksview import TracksView
