@@ -22,23 +22,23 @@ CHANNEL_TYPE_LENGTH     = 9
 class SampleMetaException(Exception):
     pass
 
-class ChannelMeta(object):
-    name = None
-    units = None
-    min = 0
-    max = 100
-    precision = 0
-    sampleRate = 0
-    type = 0
+cdef class ChannelMeta(object):
+    cdef public object name
+    cdef public units
+    cdef public int min
+    cdef public int max
+    cdef public int precision
+    cdef public int sampleRate
+    cdef public int type
     
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', '')
-        self.units = kwargs.get('units', self.units)
-        self.min = kwargs.get('min', self.min)
-        self.max = kwargs.get('max', self.max)
-        self.precision = kwargs.get('prec', self.precision)
-        self.sampleRate = kwargs.get('sampleRate', self.sampleRate)
-        self.type = kwargs.get('type', self.type)
+        self.units = kwargs.get('units', '')
+        self.min = kwargs.get('min', 0)
+        self.max = kwargs.get('max', 100)
+        self.precision = kwargs.get('prec', 0)
+        self.sampleRate = kwargs.get('sampleRate', 0)
+        self.type = kwargs.get('type', 0)
         
     def fromJson(self, json):
         self.name = json.get('nm', self.name)
