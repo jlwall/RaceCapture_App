@@ -8,16 +8,16 @@ from kivy.properties import ObjectProperty
 import os
 import copy
 
-CHANNEL_TYPE_UNKNOWN    = 0
-CHANNEL_TYPE_ANALOG     = 1
-CHANNEL_TYPE_FREQ       = 2
-CHANNEL_TYPE_GPIO       = 3
-CHANNEL_TYPE_PWM        = 4
-CHANNEL_TYPE_IMU        = 5
-CHANNEL_TYPE_GPS        = 6
-CHANNEL_TYPE_STATISTICS = 7
-CHANNEL_TYPE_COUNT      = 8
-CHANNEL_TYPE_LENGTH     = 9
+cdef int CHANNEL_TYPE_UNKNOWN    = 0
+cdef int CHANNEL_TYPE_ANALOG     = 1
+cdef int CHANNEL_TYPE_FREQ       = 2
+cdef int CHANNEL_TYPE_GPIO       = 3
+cdef int CHANNEL_TYPE_PWM        = 4
+cdef int CHANNEL_TYPE_IMU        = 5
+cdef int CHANNEL_TYPE_GPS        = 6
+cdef int CHANNEL_TYPE_STATISTICS = 7
+cdef int CHANNEL_TYPE_COUNT      = 8
+cdef int CHANNEL_TYPE_LENGTH     = 9
 
 class SampleMetaException(Exception):
     pass
@@ -102,7 +102,7 @@ cdef class Sample(object):
                     self.processData(dataJson)
     
     def processData(self, dataJson):
-        metas = self.metas.channel_metas
+        cdef object metas = self.metas.channel_metas
         cdef int channelConfigCount = len(metas) 
         cdef int bitmaskFieldCount = max(0, (channelConfigCount - 1) / 32) + 1       
         
@@ -114,10 +114,11 @@ cdef class Sample(object):
             raise SampleMetaException('Unexpected data packet count {}; channel meta expects between {} and {} channels'.format(fieldDataSize, bitmaskFieldCount, maxFieldCount))
 
         cdef list bitmaskFields = []
+        cdef int i
         for i in range(fieldDataSize - bitmaskFieldCount, fieldDataSize):
             bitmaskFields.append(int(fieldData[i]))
         
-        samples = self.samples
+        cdef list samples = self.samples
         del samples[:]
         
         cdef int channelConfigIndex = 0
@@ -143,7 +144,7 @@ cdef class Sample(object):
             channelConfigIndex += 1
             mask_index += 1
 
-UNKNOWN_CHANNEL = ChannelMeta(name='Unknown')
+cdef object UNKNOWN_CHANNEL = ChannelMeta(name='Unknown')
 
 class RuntimeChannels(EventDispatcher):
     data_bus = ObjectProperty(None, allownone=True)

@@ -133,11 +133,11 @@ cdef class DataBus(object):
     def getData(self, channel):
         return self.channel_data[channel]
 
-SAMPLE_POLL_TEST_TIMEOUT       = 3.0
-SAMPLE_POLL_INTERVAL_TIMEOUT   = 0.1 #10Hz polling
-SAMPLE_POLL_EVENT_TIMEOUT      = 1.0
-SAMPLE_POLL_EXCEPTION_RECOVERY = 10.0
-SAMPLES_TO_WAIT_FOR_META       = 5.0
+cdef float SAMPLE_POLL_TEST_TIMEOUT       = 3.0
+cdef float SAMPLE_POLL_INTERVAL_TIMEOUT   = 0.1 #10Hz polling
+cdef float SAMPLE_POLL_EVENT_TIMEOUT      = 1.0
+cdef float SAMPLE_POLL_EXCEPTION_RECOVERY = 10.0
+cdef int SAMPLES_TO_WAIT_FOR_META       = 5
 
 cdef class DataBusPump(object):
     """Responsible for dispatching raw JSON API messages into a format the DataBus can consume.
