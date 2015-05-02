@@ -14,26 +14,69 @@ from utils import *
 
 Builder.load_file('autosportlabs/uix/track/trackmap.kv')
 
-class Point:
-    x = 0.0
-    y = 0.0
+cdef class Point:
+    cdef public float x
+    cdef public float y
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+cdef _render_track(object track_color, object canvas, list points, int height, int left, int bottom, float trackWidthScale, float globalRatio, float heightPadding, float widthPadding):
+        cdef list linePoints = []
+        cdef object point
+        cdef object scaledPoint
+        cdef int adjustedX
+        cdef int adjustedY
+        for point in points:
+            adjustedX = int((widthPadding + (point.x * globalRatio))) + left
+            #need to invert the Y since 0,0 starts at top left
+            adjustedY = int((heightPadding + (point.y * globalRatio))) + bottom
+            scaledPoint = Point(adjustedX, adjustedY)
+            linePoints.append(scaledPoint.x)
+            linePoints.append(scaledPoint.y)
+        
+        with canvas:
+            Color(*track_color)
+            Line(points=linePoints, width=dp(trackWidthScale * height), closed=True)        
+
+cdef _gen_map_points(object geoPoints):
+    cdef list points = []
     
+    # min and max coordinates, used in the computation below
+    cdef object minXY = Point(-1, -1)
+    cdef object maxXY = Point(-1, -1)
+    cdef object geoPoint
+    cdef float latitude
+    cdef float longitude
+    cdef object point
+    
+    for geoPoint in geoPoints:
+        latitude = geoPoint.latitude * float(math.pi / 180.0)
+        longitude = geoPoint.longitude * float(math.pi / 180.0)
+        point = Point(longitude, float(math.log(math.tan((math.pi / 4.0) + 0.5 * latitude))))
+        
+        minXY.x = point.x if minXY.x == -1 else min(minXY.x, point.x)
+        minXY.y = point.y if minXY.y == -1 else min(minXY.y, point.y)
+        points.append(point);
+    
+    # now, we need to keep track the max X and Y values
+    for point in points:
+        point.x = point.x - minXY.x
+        point.y = point.y - minXY.y
+        maxXY.x = point.x if maxXY.x == -1 else max(maxXY.x, point.x)
+        maxXY.y = point.y if maxXY.y == -1 else max(maxXY.y, point.y);
+            
+    return minXY, maxXY, points
+       
 class TrackMap(Widget):
+    trackColor = (1.0, 1.0, 1.0, 0.5)    
     trackWidthScale =0.01
-    trackColor = (1.0, 1.0, 1.0, 0.5)
     MIN_PADDING = dp(1)
     offsetPoint = Point(0,0)
-    globalRatio = 0
-    heightPadding = 0
-    widthPadding = 0
     
     mapPoints = []
     minXY = Point(-1, -1)
     maxXY = Point(-1, -1)
-    
     
     def set_trackColor(self, color):
         self.trackColor = color
@@ -77,57 +120,14 @@ class TrackMap(Widget):
         self.widthPadding = (width - (self.globalRatio * self.maxXY.x)) / 2.0
         self.offsetPoint = self.minXY;
         
-        points = self.mapPoints
-        linePoints = []
-        for point in points:
-            scaledPoint = self.scalePoint(point, self.height, left, bottom)
-            linePoints.append(scaledPoint.x)
-            linePoints.append(scaledPoint.y)
-        self.linePoints = linePoints
+        _render_track(self.trackColor, self.canvas, self.mapPoints, self.height, left, bottom, self.trackWidthScale, self.globalRatio, self.heightPadding, self.widthPadding)
         
-        with self.canvas:
-            Color(*self.trackColor)
-            Line(points=self.linePoints, width=dp(self.trackWidthScale * self.height), closed=True)
         
     def setTrackPoints(self, geoPoints):
         self.genMapPoints(geoPoints)
         self.update_map()
         
-        
-    def projectPoint(self, geoPoint):
-        latitude = geoPoint.latitude * float(math.pi / 180.0)
-        longitude = geoPoint.longitude * float(math.pi / 180.0)
-        point = Point(longitude, float(math.log(math.tan((math.pi / 4.0) + 0.5 * latitude))))
-        return point;
-
-    def scalePoint(self, point, height, left, bottom):
-        adjustedX = int((self.widthPadding + (point.x * self.globalRatio))) + left
-        #need to invert the Y since 0,0 starts at top left
-        adjustedY = int((self.heightPadding + (point.y * self.globalRatio))) + bottom
-        return Point(adjustedX, adjustedY)
-
     def genMapPoints(self, geoPoints):
-        points = []
-        
-        # min and max coordinates, used in the computation below
-        minXY = Point(-1, -1)
-        maxXY = Point(-1, -1)
-        
-        for geoPoint in geoPoints:
-            point = self.projectPoint(geoPoint)
-            minXY.x = point.x if minXY.x == -1 else min(minXY.x, point.x)
-            minXY.y = point.y if minXY.y == -1 else min(minXY.y, point.y)
-            points.append(point);
-        
-        # now, we need to keep track the max X and Y values
-        for point in points:
-            point.x = point.x - minXY.x
-            point.y = point.y - minXY.y
-            maxXY.x = point.x if maxXY.x == -1 else max(maxXY.x, point.x)
-            maxXY.y = point.y if maxXY.y == -1 else max(maxXY.y, point.y);
-                
-        self.minXY = minXY
-        self.maxXY = maxXY                
-        self.mapPoints =  points        
-        
-        
+        self.minXY, self.maxXY, self.mapPoints = _gen_map_points(geoPoints)
+
+
