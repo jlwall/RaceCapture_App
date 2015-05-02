@@ -23,8 +23,8 @@ class SampleMetaException(Exception):
     pass
 
 cdef class ChannelMeta(object):
-    cdef public object name
-    cdef public units
+    cdef public basestring name
+    cdef public basestring units
     cdef public int min
     cdef public int max
     cdef public int precision
@@ -49,8 +49,12 @@ cdef class ChannelMeta(object):
         self.sampleRate = int(json.get('sr', self.sampleRate))
         self.type = int(json.get('type', self.type))
 
-class ChannelMetaCollection(object):
-    channel_metas = []
+cdef class ChannelMetaCollection(object):
+    cdef public list channel_metas
+    
+    def __init__(self, **kwargs):
+        self.channel_metas = []
+        
     def fromJson(self, metaJson):
         channel_metas = self.channel_metas
         del channel_metas[:]
