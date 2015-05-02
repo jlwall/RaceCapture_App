@@ -17,7 +17,7 @@ class DataBusFactory(object):
         databus.add_data_filter(CurrentLapTimeFilter(system_channels))
         return databus
     
-class DataBus(object):
+cdef class DataBus(object):
     """Central hub for current sample data. Receives data from DataBusPump
     Also contains the periodic updater for listeners. Updates occur in the UI thread via Clock.schedule_interval
     Architecture:    
@@ -27,14 +27,21 @@ class DataBus(object):
     (CHANNEL LISTENERS) => DataBus.addChannelListener()  -- listeners receive updates with a particular channel's value
     (META LISTENERS) => DataBus.addMetaListener() -- Listeners receive updates with meta data
     """
-    channel_metas = {}
-    channel_data = {}
-    channel_listeners = {}
-    meta_listeners = []
-    meta_updated = False
-    data_filters = []
+    cdef dict channel_metas
+    cdef dict channel_data
+    cdef dict channel_listeners
+    cdef list meta_listeners 
+    cdef bint meta_updated
+    cdef list data_filters
     
     def __init__(self, **kwargs):
+        self.channel_metas = {}
+        self.channel_data = {}
+        self.channel_listeners = {}
+        self.meta_listeners = []
+        self.meta_updated = False
+        self.data_filters = []
+        
         super(DataBus, self).__init__(**kwargs)
 
     def start_update(self, interval = DEFAULT_DATABUS_UPDATE_INTERVAL):
@@ -44,7 +51,7 @@ class DataBus(object):
         Clock.unschedule(self.notify_listeners)
 
     def _update_datafilter_meta(self, datafilter):
-        metas = datafilter.get_channel_meta()
+        cdef object metas = datafilter.get_channel_meta()
         for channel, meta in metas.iteritems():
             self.channel_metas[channel] = meta
 
@@ -56,6 +63,7 @@ class DataBus(object):
         for meta in metas.channel_metas:
             self.channel_metas[meta.name] = meta
             
+        cdef object f
         #add channel meta for existing filters
         for f in self.data_filters:
             self._update_datafilter_meta(f)
@@ -65,11 +73,15 @@ class DataBus(object):
     def update_samples(self, sample):
         """Update channel data with new samples
         """
+        cdef basestring channel
+        cdef float value
+        cdef object sample_item
         for sample_item in sample.samples:
             channel = sample_item.channelMeta.name
             value = sample_item.value
             self.channel_data[channel] = value
         
+        cdef object f
         #apply filters to updated data
         for f in self.data_filters:
             f.filter(self.channel_data)
@@ -127,20 +139,25 @@ SAMPLE_POLL_EVENT_TIMEOUT      = 1.0
 SAMPLE_POLL_EXCEPTION_RECOVERY = 10.0
 SAMPLES_TO_WAIT_FOR_META       = 5.0
 
-class DataBusPump(object):
+cdef class DataBusPump(object):
     """Responsible for dispatching raw JSON API messages into a format the DataBus can consume.
     Attempts to detect asynchronous messaging mode, where messages are streamed to the DataBusPump.
     If Async mode not detected, a polling thread is created to simulate this.
     """
-    _rc_api = None
-    _data_bus = None
-    sample = Sample()
-    _sample_event = Event()
-    _running = Event()
-    _sample_thread = None
-    _meta_is_stale_counter = 0
+    cdef object sample
+    cdef object _rc_api
+    cdef object _data_bus
+    cdef object _sample_event
+    cdef object _running
+    cdef object _sample_thread
+    cdef int _meta_is_stale_counter
     
     def __init__(self, **kwargs):
+        self.sample = Sample()
+        self._running = Event()
+        self._sample_event = Event()
+        self._sample_thread
+        self._meta_is_stale_counter = 0
         super(DataBusPump, self).__init__(**kwargs)
 
     def startDataPump(self, data_bus, rc_api):
@@ -160,14 +177,14 @@ class DataBusPump(object):
             self.meta_is_stale()
 
     def on_meta(self, meta_json):
-        metas = self.sample.metas
+        cdef object metas = self.sample.metas
         metas.fromJson(meta_json.get('meta'))
         self._data_bus.update_channel_meta(metas)
         self._meta_is_stale_counter = 0
     
     def on_sample(self, sample_json):
-        sample = self.sample
-        dataBus = self._data_bus
+        cdef object sample = self.sample
+        cdef object dataBus = self._data_bus
         try:
             sample.fromJson(sample_json)
             dataBus.update_samples(sample)
@@ -197,8 +214,8 @@ class DataBusPump(object):
         self._rc_api.get_meta()
     
     def sample_worker(self):
-        rc_api = self._rc_api
-        sample_event = self._sample_event
+        cdef object rc_api = self._rc_api
+        cdef object sample_event = self._sample_event
         
         print("DataBus Sampler Starting")
         sample_event.clear()
