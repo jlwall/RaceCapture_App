@@ -344,13 +344,9 @@ class RcpApi:
                               RcpCmd('imuCfg',      self.getImuCfg),
                               RcpCmd('gpsCfg',      self.getGpsCfg),
                               RcpCmd('lapCfg',      self.getLapCfg),
-                              RcpCmd('timerCfg',    self.getTimerCfg),
-                              RcpCmd('gpioCfg',     self.getGpioCfg),
-                              RcpCmd('pwmCfg',      self.getPwmCfg),
                               RcpCmd('trackCfg',    self.getTrackCfg),
                               RcpCmd('canCfg',      self.getCanCfg),
                               RcpCmd('obd2Cfg',     self.getObd2Cfg),
-                              RcpCmd('scriptCfg',   self.getScript),
                               RcpCmd('connCfg',     self.getConnectivityCfg),
                               RcpCmd('trackDb',     self.getTrackDb)
                            ]
