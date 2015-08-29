@@ -11,12 +11,15 @@ if __name__ == '__main__':
     import logging
     import argparse
     import kivy
+    import os
+    import traceback
     from kivy.properties import AliasProperty
     from functools import partial
     from kivy.clock import Clock
     from kivy.config import Config
     from kivy.logger import Logger
     kivy.require('1.9.0')
+    from kivy.base import ExceptionManager, ExceptionHandler
     Config.set('graphics', 'width', '1024')
     Config.set('graphics', 'height', '576')
     Config.set('kivy', 'exit_on_escape', 0)
@@ -45,6 +48,13 @@ if __name__ == '__main__':
     if not is_mobile_platform():
         kivy.config.Config.set ( 'input', 'mouse', 'mouse,disable_multitouch' )
 
+    # If we have a Sentry config file, create a client to send crash reports to
+    if os.path.isfile('sentry.cfg'):
+        import raven
+        # .sentry file contains our Sentry DSN
+        sentry_file = open('sentry.cfg', 'r')
+        dsn = sentry_file.read().rstrip()
+        sentry_client = raven.Client(dsn=dsn, release=__version__)
 
 from kivy.app import App, Builder
 from autosportlabs.racecapture.config.rcpconfig import RcpConfig, VersionConfig
@@ -308,7 +318,7 @@ class RaceCaptureApp(App):
         status_view = StatusView(self.trackManager, self._status_pump, name='status')
         self.tracks_listeners.append(status_view)
         return status_view
-    
+
     def build_tracks_view(self):
         tracks_view = TracksView(name='tracks', track_manager=self.trackManager)
         self.tracks_listeners.append(tracks_view)
@@ -485,5 +495,25 @@ class RaceCaptureApp(App):
             else:
                 self._telemetry_connection.telemetry_enabled = False
 
+class CrashHandler(ExceptionHandler):
+    def handle_exception(self, exception_info):
+        if type(exception_info) == KeyboardInterrupt:
+            Logger.info("Main: KeyboardInterrupt")
+            sys.exit()
+        if 'sentry_client' in globals():
+            ident = sentry_client.captureException(value=exception_info)
+            Logger.critical("CrashHandler: crash caught: Reference is %s" % ident)
+            traceback.print_exc()
+        return ExceptionManager.PASS
+
 if __name__ == '__main__':
-    RaceCaptureApp().run()
+    ExceptionManager.add_handler(CrashHandler())
+    try:
+        RaceCaptureApp().run()
+    except:
+        if 'sentry_client' in globals():
+            ident = sentry_client.captureException()
+            Logger.error("Main: crash caught: Reference is %s" % ident)
+            traceback.print_exc()
+        else:
+            raise
