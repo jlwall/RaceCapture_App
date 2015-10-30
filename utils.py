@@ -9,7 +9,8 @@ __all__ = ('is_mobile_platform', 'intersection', 'difference', 'curry', 'strtotu
            'is_color_transparent', 'boundary', 'dist',
            'deprecated', 'SafeList',
            'interpolate', 'OrderedDict', 'kvFind', 'kvFindClass', 'kvPrintAttr',
-           'breadth_first', 'walk_tree', 'filter_tree', 'kvquery', 'pct_h', 'pct_w', 'time_to_epoch')
+           'breadth_first', 'walk_tree', 'filter_tree', 'kvquery', 'pct_h', 'pct_w',
+           'time_to_epoch', 'strip_whitespace', 'paste_clipboard')
 
 import time
 import calendar
@@ -18,6 +19,10 @@ from UserDict import DictMixin
 from kivy.core.window import Window
 from kivy import platform
 from datetime import datetime
+from kivy.core.clipboard import Clipboard
+
+def strip_whitespace(value):
+    return value.replace('\n','').replace('\r','').strip()
 
 def is_mobile_platform():
     return True if platform == 'android' or platform == 'ios' else False
@@ -439,3 +444,19 @@ def kvquery(root, **kwargs):
 
 
     return filter_tree(root, _query)
+
+'''
+Pastes a string to the system clipboard.
+Tries to find the first appropriate generic text clipboard and pastes to that.
+'''
+def paste_clipboard(text):
+    #convert to generic
+    text = text.encode('ascii')
+
+    clipboard_types = Clipboard.get_types()
+    for cb_type in clipboard_types:
+        if str(cb_type).lower().strip().startswith('text'):
+            Clipboard.put(text, cb_type)
+            return
+                
+    raise Exception('Could not find plain text clipboard in ' + str(clipboard_types))

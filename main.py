@@ -1,5 +1,5 @@
 #!/usr/bin/python
-__version__ = "1.3.8"
+__version__ = "1.3.13"
 import sys
 import os
 
@@ -79,9 +79,6 @@ class RaceCaptureApp(App):
     #Central RCP configuration object
     rc_config  = RcpConfig()
 
-    #RaceCapture serial I/O
-    _rc_api = RcpApi()
-
     #dataBus provides an eventing / polling mechanism to parts of the system that care
     _databus = None
 
@@ -124,6 +121,9 @@ class RaceCaptureApp(App):
             self.base_dir = sys._MEIPASS
         else:
             self.base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        #RaceCapture serial I/O
+        self._rc_api = RcpApi(on_disconnect=self._on_rcp_disconnect)
 
         #self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         #self._keyboard.bind(on_key_down=self._on_keyboard_down)
@@ -226,7 +226,6 @@ class RaceCaptureApp(App):
         self.dataBusPump.meta_is_stale()
         for listener in self.config_listeners:
             Clock.schedule_once(lambda dt, inner_listener=listener: inner_listener.dispatch('on_config_written', self.rc_config))
-        Clock.schedule_once(lambda dt: self.showActivity(''), 5.0)
 
     def on_write_config_error(self, detail):
         alertPopup('Error Writing', 'Could not write configuration:\n\n' + str(detail))
@@ -244,7 +243,6 @@ class RaceCaptureApp(App):
         for listener in self.config_listeners:
             Clock.schedule_once(lambda dt, inner_listener=listener: inner_listener.dispatch('on_config_updated', self.rc_config))
         self.rc_config.stale = False
-        self.showActivity('')
 
     def on_read_config_error(self, detail):
         alertPopup('Error Reading', 'Could not read configuration:\n\n' + str(detail))
@@ -290,7 +288,7 @@ class RaceCaptureApp(App):
                 self.mainViews[view_name] = view
             self.screenMgr.current = view_name
         except Exception as detail:
-            Logger.info('RaceCaptureApp: Failed to load main view ' + str(view_name) + ' ' + str(detail))
+            Logger.error('RaceCaptureApp: Failed to load main view ' + str(view_name) + ' ' + str(detail))
 
     def switchMainView(self, view_name):
             self.mainNav.anim_to_state('closed')
@@ -338,7 +336,7 @@ class RaceCaptureApp(App):
         preferences_view = PreferencesView(name='preferences', settings=self.settings, base_dir=self.base_dir)
         preferences_view.settings_view.bind(on_config_change=self._on_preferences_change)
         return preferences_view
-    
+
     def build_homepage_view(self):
         homepage_view = HomePageView(name='home')
         homepage_view.bind(on_select_view = lambda instance, view_name: self.switchMainView(view_name))
@@ -395,10 +393,12 @@ class RaceCaptureApp(App):
         Clock.schedule_once(lambda dt: self.post_launch(), 1.0)
 
     def post_launch(self):
+        self._setup_toolbar()
         Clock.schedule_once(lambda dt: self.init_data())
         Clock.schedule_once(lambda dt: self.init_rc_comms())
         Clock.schedule_once(lambda dt: self.show_startup_view())
         self.check_first_time_setup()
+
         
     def check_first_time_setup(self):
         if self.settings.userPrefs.get_pref('preferences', 'first_time_setup') == 'True':
@@ -409,12 +409,8 @@ class RaceCaptureApp(App):
                             'Dashboard':'dash',
                             'Analysis': 'analysis',
                             'Configuration': 'config' }
-        try:
-            view_pref = self.settings.userPrefs.get_pref('preferences', 'startup_screen')
-            view = settings_to_view[view_pref]
-            self.showMainView(view)
-        except:
-            Logger.error("RaceCaptureApp: could not show main view " + str(view_pref))
+        view_pref = self.settings.userPrefs.get_pref('preferences', 'startup_screen')
+        self.showMainView(settings_to_view[view_pref])
 
     def init_rc_comms(self):
         port = self.getAppArg('port')
@@ -430,7 +426,11 @@ class RaceCaptureApp(App):
         if version.is_compatible_version():
             self.showStatus("{} v{}.{}.{}".format(version.friendlyName, version.major, version.minor, version.bugfix), False)
             self.dataBusPump.startDataPump(self._databus, self._rc_api)
-            self._status_pump.start(self._rc_api)        
+            self._status_pump.start(self._rc_api)
+
+            if self.settings.userPrefs.get_pref('preferences', 'send_telemetry') == "1" and self._telemetry_connection:
+                self._telemetry_connection.telemetry_enabled = True
+
             if self.rc_config.loaded == False:
                 Clock.schedule_once(lambda dt: self.on_read_config(self))
             else:
@@ -448,14 +448,23 @@ class RaceCaptureApp(App):
             if not self._rc_api.comms.isOpen():
                 self._rc_api.run_auto_detect()
                 
-        self.showStatus("Could not detect RaceCapture/Pro", True)
+        self.showStatus("Connecting...", True)
         Clock.schedule_once(lambda dt: re_detect(), 1.0)
 
     def rc_detect_activity(self, info):
         self.showActivity('Searching {}'.format(info))
 
+    def _on_rcp_disconnect(self):
+        if self._telemetry_connection.telemetry_enabled:
+            self._telemetry_connection.telemetry_enabled = False
+
     def open_settings(self, *largs):
         self.switchMainView('preferences')
+
+    def _setup_toolbar(self):
+        status_bar = self.root.ids.status_bar
+        status_bar.status_pump = self._status_pump
+        status_bar.track_manager = self.trackManager
 
     def setup_telemetry(self):
         host = self.getAppArg('telemetryhost')

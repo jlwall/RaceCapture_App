@@ -139,7 +139,7 @@ class SingleChannelGauge(Gauge):
                 self._update_channel_binding()
                 self._update_channel_ranges()
         except Exception as e:
-            Logger.error('Gauge: Error setting channel {} {}'.format(value, str(e)))
+            Logger.error('Gauge: Error setting channel {}: {}'.format(self.channel, str(e)))
         
     def on_settings(self, instance, value):
         #Do I have an id so I can track my settings?
@@ -313,7 +313,7 @@ class CustomizableGauge(ButtonBehavior, SingleChannelGauge):
         content = ChannelCustomizationView(settings=self.settings, channel=self.channel)
         content.bind(on_channel_customization_close=self.on_channel_customization_close)
 
-        popup = Popup(title='Customize {}'.format(self.channel), content=content, size_hint=(0.6, 0.7))
+        popup = Popup(title='Customize {}'.format(self.channel), content=content, size_hint=(0.6, 0.8))
         popup.bind(on_dismiss=self.popup_dismissed)
         popup.open()
         self._popup = popup

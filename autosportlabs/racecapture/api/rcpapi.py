@@ -72,6 +72,8 @@ class RcpApi:
         self._enable_autodetect = Event()
         self._enable_autodetect.set()
 
+        self._disconnect_callback = kwargs.get('on_disconnect')
+
     def enable_autorecover(self):
         Logger.info("RCPAPI: Enabling auto recover")
         self._enable_autodetect.set()
@@ -81,6 +83,9 @@ class RcpApi:
         self._enable_autodetect.clear()
         
     def recover_connection(self):
+        if self._disconnect_callback:
+            self._disconnect_callback()
+
         if self._enable_autodetect.is_set():
             Logger.info("RCPAPI: attempting to recover connection")
             self.run_auto_detect()
@@ -151,7 +156,8 @@ class RcpApi:
             try:
                 msg = comms.read_message()
                 if msg:
-                    
+                    #clean incoming string, and drop illegal characters
+                    msg = unicode(msg, errors='ignore')
                     Logger.trace('RCPAPI: msg_rx_worker Rx: ' + str(msg))
                     msgJson = json.loads(msg, strict = False)
                     self.on_rx(True)

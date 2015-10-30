@@ -9,7 +9,6 @@ DIR=$( cd ../.. && pwd )
 #Kivy's build/packaging tools expect the Kivy app here
 if [ ! -f "./Kivy.App" ]; then
 	cp -a /Applications/Kivy.app ./Kivy.App
-	#rsync -a /Applications/Kivy.App/ ./Kivy.App
 fi
 
 ./package-app.sh "$DIR/"
@@ -24,7 +23,7 @@ rm -rf RaceCapture.app/Contents/Resources/yourapp/bin
 rm -rf RaceCapture.app/Contents/Resources/kivy_stable
 
 #We have to customize their theme so checkboxes show up
-cp defaulttheme-0.png RaceCapture.app/Contents/Resources/kivy/kivy/data/images/ 
+cp ../defaulttheme-0.png RaceCapture.app/Contents/Resources/kivy/kivy/data/images/
 
 #Custom icon
 cp racecapture.icns RaceCapture.app/Contents/Resources/appIcon.icns
