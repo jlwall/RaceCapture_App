@@ -73,7 +73,7 @@ class RaceCaptureApp(App):
 
     #map of view keys to factory functions for building top level views
     view_builders = {}
-    
+
     #container for all settings
     settings = None
 
@@ -87,7 +87,7 @@ class RaceCaptureApp(App):
     dataBusPump = DataBusPump()
 
     _status_pump = StatusPump()
-    
+
     #Track database manager
     trackManager = None
 
@@ -115,6 +115,8 @@ class RaceCaptureApp(App):
     def __init__(self, **kwargs):
         super(RaceCaptureApp, self).__init__(**kwargs)
 
+        self.processArgs()
+
         # We do this because when this app is bundled into a standalone app
         # by pyinstaller we must reference all files by their absolute paths
         # sys._MEIPASS is provided by pyinstaller
@@ -124,7 +126,8 @@ class RaceCaptureApp(App):
             self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
         #RaceCapture serial I/O
-        self._rc_api = RcpApi(on_disconnect=self._on_rcp_disconnect)
+        self._rc_api = RcpApi(on_disconnect=self._on_rcp_disconnect,
+                              print_tx_rx=self.getAppArg('print_tx_rx'))
 
         #self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         #self._keyboard.bind(on_key_down=self._on_keyboard_down)
@@ -135,14 +138,13 @@ class RaceCaptureApp(App):
 
         Window.bind(on_keyboard=self._on_keyboard)
         self.register_event_type('on_tracks_updated')
-        self.processArgs()
         self.settings.appConfig.setUserDir(self.user_data_dir)
         self.trackManager = TrackManager(user_dir=self.settings.get_default_data_dir(), base_dir=self.base_dir)
         self.setup_telemetry()
 
     def on_pause(self):
         return True
-    
+
     def _on_keyboard(self, keyboard, keycode, *args):
         if keycode == 27:
             self.switchMainView('home')
@@ -151,6 +153,9 @@ class RaceCaptureApp(App):
         parser = argparse.ArgumentParser(description='Autosport Labs Race Capture App')
         parser.add_argument('-p','--port', help='Port', required=False)
         parser.add_argument('--telemetryhost', help='Telemetry host', required=False)
+        parser.add_argument('--print_tx_rx', help='Prints the serial output ' +
+                            'that is sent between the app and RaceCapture',
+                            required=False, default=False, action='store_true')
 
         if sys.platform == 'win32':
             parser.add_argument('--multiprocessing-fork', required=False, action='store_true')
@@ -161,7 +166,7 @@ class RaceCaptureApp(App):
         return self.app_args.get(name, None)
 
     def first_time_setup(self):
-        popup = None 
+        popup = None
         def _on_answer(instance, answer):
             popup.dismiss()
             if answer:
@@ -169,10 +174,10 @@ class RaceCaptureApp(App):
                 Clock.schedule_once(lambda dt: self.mainViews['tracks'].check_for_update(), 0.5)
         popup = confirmPopup('Race Tracks', 'Looks like this is your first time running.\n\nShould I update the Race Track database?', _on_answer)
         self.settings.userPrefs.set_pref('preferences', 'first_time_setup', False)
-        
+
     def loadCurrentTracksSuccess(self):
         Logger.info('RaceCaptureApp: Current Tracks Loaded')
-        Clock.schedule_once(lambda dt: self.notifyTracksUpdated())            
+        Clock.schedule_once(lambda dt: self.notifyTracksUpdated())
 
     def loadCurrentTracksError(self, details):
         alertPopup('Error Loading Tracks', str(details))
@@ -276,7 +281,7 @@ class RaceCaptureApp(App):
 
     def on_start(self):
         pass
-    
+
     def on_stop(self):
         self._rc_api.cleanup_comms()
         self._telemetry_connection.telemetry_enabled = False
@@ -295,7 +300,7 @@ class RaceCaptureApp(App):
     def switchMainView(self, view_name):
             self.mainNav.anim_to_state('closed')
             Clock.schedule_once(lambda dt: self.showMainView(view_name), 0.25)
-    
+
     def build_config_view(self):
         config_view = ConfigView(name='config',
                                 rcpConfig=self.rc_config,
@@ -313,7 +318,7 @@ class RaceCaptureApp(App):
         self.config_listeners.append(config_view)
         self.tracks_listeners.append(config_view)
         return config_view
-    
+
     def build_status_view(self):
         status_view = StatusView(self.trackManager, self._status_pump, name='status')
         self.tracks_listeners.append(status_view)
@@ -323,17 +328,17 @@ class RaceCaptureApp(App):
         tracks_view = TracksView(name='tracks', track_manager=self.trackManager)
         self.tracks_listeners.append(tracks_view)
         return tracks_view
-    
+
     def build_dash_view(self):
         dash_view = DashboardView(name='dash', dataBus=self._databus, settings=self.settings)
         self.tracks_listeners.append(dash_view)
         return dash_view
-    
+
     def build_analysis_view(self):
         analysis_view = AnalysisView(name='analysis', data_bus=self._databus, settings=self.settings, track_manager=self.trackManager)
         self.tracks_listeners.append(analysis_view)
         return analysis_view
-    
+
     def build_preferences_view(self):
         preferences_view = PreferencesView(name='preferences', settings=self.settings, base_dir=self.base_dir)
         preferences_view.settings_view.bind(on_config_change=self._on_preferences_change)
@@ -353,13 +358,13 @@ class RaceCaptureApp(App):
                               'status': self.build_status_view,
                               'home': self.build_homepage_view
                               }
-        
+
     def build(self):
         self.init_view_builders()
-        
+
         Builder.load_file('racecapture.kv')
         root = self.root
-        
+
         status_bar = root.ids.status_bar
         status_bar.bind(on_main_menu=self.on_main_menu)
         self.status_bar = status_bar
@@ -401,7 +406,7 @@ class RaceCaptureApp(App):
         Clock.schedule_once(lambda dt: self.show_startup_view())
         self.check_first_time_setup()
 
-        
+
     def check_first_time_setup(self):
         if self.settings.userPrefs.get_pref('preferences', 'first_time_setup') == 'True':
             Clock.schedule_once(lambda dt: self.first_time_setup(), 0.5)
@@ -439,8 +444,8 @@ class RaceCaptureApp(App):
                 self.showActivity('Connected')
         else:
             alertPopup('Incompatible Firmware', 'Detected {} v{}\n\nPlease upgrade firmware to {} or higher'.format(
-                               version.friendlyName, 
-                               version.version_string(), 
+                               version.friendlyName,
+                               version.version_string(),
                                VersionConfig.get_minimum_version().version_string()
                                ))
 
@@ -449,7 +454,7 @@ class RaceCaptureApp(App):
         def re_detect():
             if not self._rc_api.comms.isOpen():
                 self._rc_api.run_auto_detect()
-                
+
         self.showStatus("Connecting...", True)
         Clock.schedule_once(lambda dt: re_detect(), 1.0)
 
