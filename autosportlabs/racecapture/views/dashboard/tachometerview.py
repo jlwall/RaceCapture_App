@@ -1,5 +1,5 @@
 import kivy
-kivy.require('1.9.0')
+kivy.require('1.9.1')
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.app import Builder
@@ -19,10 +19,10 @@ class TachometerView(Screen):
     _databus = None
     _settings = None
     
-    def __init__(self, **kwargs):
+    def __init__(self, databus, settings, **kwargs):
         super(TachometerView, self).__init__(**kwargs)
-        self._databus = kwargs.get('dataBus')
-        self._settings = kwargs.get('settings')
+        self._databus = databus
+        self._settings = settings
         self.initScreen()        
                 
     def on_meta(self, channelMetas):

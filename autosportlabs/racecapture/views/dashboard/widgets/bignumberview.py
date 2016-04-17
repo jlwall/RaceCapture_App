@@ -1,5 +1,5 @@
 import kivy
-kivy.require('1.9.0')
+kivy.require('1.9.1')
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
 from kivy.app import Builder
@@ -53,7 +53,7 @@ class BigNumberView(CustomizableGauge):
     def on_value_color(self, instance, value):
         self.valueView.color = value
                 
-    def updateColors(self):
+    def update_colors(self):
         self.backgroundView.rect_color = self.select_alert_color()
 
     def on_channel(self, instance, value):

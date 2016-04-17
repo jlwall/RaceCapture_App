@@ -1,5 +1,5 @@
 import kivy
-kivy.require('1.9.0')
+kivy.require('1.9.1')
 from kivy.uix.boxlayout import BoxLayout
 from kivy.app import Builder
 from kivy.metrics import dp
@@ -25,5 +25,5 @@ class DigitalGauge(CustomizableGauge):
         except Exception as e:
             print('Failed to update digital gauge title ' + str(e))
 
-    def updateColors(self):
+    def update_colors(self):
         self.alert_background_color = self.select_alert_color()
