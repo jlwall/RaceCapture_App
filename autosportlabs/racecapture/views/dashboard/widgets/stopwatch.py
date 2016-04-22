@@ -14,6 +14,7 @@ from autosportlabs.racecapture.theme.color import ColorScheme
 
 STOPWATCH_LAYOUT='''
 <PitstopTimerView>:
+    exit_speed_frame: exit_speed_frame.__self__
     orientation: 'vertical'
     padding: (sp(10), sp(10))
     spacing: sp(10)
@@ -41,7 +42,7 @@ STOPWATCH_LAYOUT='''
             font_size: root.height * 0.38
             text: root.current_time
             on_texture: root.change_font_size()
-        BoxLayout:
+        BoxLayout: 
             id: exit_speed_frame
             canvas.before:
                 Color:
@@ -124,7 +125,6 @@ class PitstopTimerView(BoxLayout):
         self._currently_racing = False
         databus.addChannelListener(STOPWATCH_SPEED_CHANNEL, self.set_speed)
         databus.addChannelListener(STOPWATCH_CURRENT_LAP, self.set_current_lap)
-        self.exit_speed_frame = self.ids.exit_speed_frame
     
     def _set_exit_speed_frame_visible(self, visible):
         '''
@@ -175,8 +175,7 @@ class PitstopTimerView(BoxLayout):
         '''
         Increment the current stopwatch time
         '''
-        if self.current_speed < self.stop_threshold_speed:
-            self._current_time += self._STOPWATCH_TICK
+        self._current_time += self._STOPWATCH_TICK
         self.current_time = self._format_stopwatch_time()
         self.exit_speed = '{}'.format(int(self.current_speed))
         if self.current_speed > self.stop_threshold_speed:
