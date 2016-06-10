@@ -220,12 +220,15 @@ class AutomaticTrackConfigScreen(Screen):
                 
     def on_config_updated(self, rcpCfg):
         self.trackDb = rcpCfg.trackDb
-        self.init_tracks_list()
+        self.draw_tracks_list()
         
     def on_track_manager(self, instance, value):
         self.track_manager = value
-        self.init_tracks_list()
-    
+        self.draw_tracks_list()
+
+    def on_track_added(self):
+        self.draw_tracks_list()
+
     def on_tracks_selected(self, instance, selectedTrackIds):
         if self.trackDb:
             failures = False
@@ -241,7 +244,7 @@ class AutomaticTrackConfigScreen(Screen):
                         failures = True
             if failures:
                 alertPopup('Cannot Add Tracks', 'One or more tracks could not be added due to missing start/finish points.\n\nPlease check for track map updates and try again.')            
-            self.init_tracks_list()
+            self.draw_tracks_list()
             self.trackSelectionPopup.dismiss()
             self.trackDb.stale = True
             self.dispatch('on_modified')
@@ -253,7 +256,7 @@ class AutomaticTrackConfigScreen(Screen):
         popup.open()
         self.trackSelectionPopup = popup
     
-    def init_tracks_list(self):
+    def draw_tracks_list(self):
         if self.track_manager and self.trackDb:
             matchedTracks = []
             for track in self.trackDb.tracks:
@@ -282,7 +285,7 @@ class AutomaticTrackConfigScreen(Screen):
     def on_remove_track(self, instance, index):
             try:
                 del self.trackDb.tracks[index]
-                self.init_tracks_list()
+                self.draw_tracks_list()
                 self.trackDb.stale = True
                 self.dispatch('on_modified')
                             
@@ -410,6 +413,9 @@ class TrackConfigView(BaseConfigView):
         autoDetect.setControl(SettingsSwitch())
         
         self.autoConfigView.track_manager = kwargs.get('track_manager')
+
+    def on_track_added(self):
+        self.autoConfigView.on_track_added()
 
     def on_tracks_updated(self, track_manager):
         self.autoConfigView.track_manager = track_manager

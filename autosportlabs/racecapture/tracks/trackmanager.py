@@ -181,8 +181,8 @@ class TrackManager:
         radius = point.metersToDegrees(searchRadius, searchBearing)
         for trackId in self.tracks.keys():
             track = self.tracks[trackId]
-            trackCenter = track.centerpoint
-            if trackCenter and trackCenter.withinCircle(point, radius):
+            start_finish = track.start_finish_point
+            if start_finish.latitude and start_finish.longitude and start_finish.withinCircle(point, radius):
                 return track
         return None
 

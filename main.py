@@ -49,6 +49,7 @@ if __name__ == '__main__':
     from autosportlabs.racecapture.settings.prefs import Range
     from autosportlabs.telemetry.telemetryconnection import TelemetryManager
     from autosportlabs.help.helpmanager import HelpInfo
+    from autosportlabs.racecapture.tracks.trackhelper import TrackHelper
     from toolbarview import ToolbarView
     if not is_mobile_platform():
         kivy.config.Config.set ('input', 'mouse', 'mouse,multitouch_on_demand')
@@ -155,6 +156,8 @@ class RaceCaptureApp(App):
         self.trackManager = TrackManager(user_dir=self.settings.get_default_data_dir(), base_dir=self.base_dir)
         self.setup_telemetry()
 
+        self._track_helper = None
+
     def on_pause(self):
         return True
 
@@ -190,6 +193,14 @@ class RaceCaptureApp(App):
 
     def _serial_warning(self):
         alertPopup('Warning', 'Command failed. Ensure you have selected a correct serial port')
+
+    def _on_track_detected(self, instance, *args):
+        self.on_write_config(None, None)
+
+        config_view = self.mainViews.get('config')
+
+        if config_view:
+            config_view.on_track_added()
 
     # Write Configuration
     def on_write_config(self, instance, *args):
@@ -375,7 +386,8 @@ class RaceCaptureApp(App):
         Clock.schedule_once(lambda dt: self.init_rc_comms())
         Clock.schedule_once(lambda dt: self.show_startup_view())
         self.check_first_time_setup()
-
+        self._track_helper = TrackHelper(self.trackManager, self._rc_api, self._status_pump, self.rc_config)
+        self._track_helper.bind(on_track_detected=self._on_track_detected)
 
     def check_first_time_setup(self):
         if self.settings.userPrefs.get_pref('preferences', 'first_time_setup') == 'True':

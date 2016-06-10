@@ -102,6 +102,14 @@ class ConfigView(Screen):
         self.rc_config = config
         self.update_config_views()
 
+    def on_track_added(self):
+        self._notify_track_added()
+
+    def _notify_track_added(self):
+        for view in self.configViews:
+            if hasattr(view, 'on_track_added'):
+                view.on_track_added()
+
     def on_track_manager(self, instance, value):
         self.update_tracks()
 
