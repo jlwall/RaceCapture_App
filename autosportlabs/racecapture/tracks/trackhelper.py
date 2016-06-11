@@ -49,7 +49,7 @@ class TrackHelper(EventDispatcher):
 
         if len(self.track_manager.tracks) == 0:
             self.track_manager.load_tracks(success_cb=self._on_tracks_loaded, fail_cb=self._on_tracks_load_fail)
-            Logger.info("TrackHelper: Loading tracks")
+            Logger.debug("TrackHelper: Loading tracks")
         else:
             self._tracks_loaded = True
 
@@ -79,7 +79,7 @@ class TrackHelper(EventDispatcher):
         :return: None
         """
         self._tracks_loaded = True
-        Logger.info("TrackHelper: tracks loaded")
+        Logger.debug("TrackHelper: tracks loaded")
 
     def _on_tracks_load_fail(self):
         """
@@ -99,22 +99,22 @@ class TrackHelper(EventDispatcher):
         :return: Boolean
         """
         if self._track_detected:
-            Logger.info("TrackHelper: track detected, aborting")
+            Logger.debug("TrackHelper: track detected, aborting")
             return False
 
         if self._status['GPS']['init'] != 1 and self._status['GPS']['qual'] < 2:
-            Logger.info("TrackHelper: GPS not initialized or signal strength not high enough, aborting")
+            Logger.debug("TrackHelper: GPS not initialized or signal strength not high enough, aborting")
             return False
 
         if not self._ready_start_time:
-            Logger.info("TrackHelper: waiting for RC warmup")
+            Logger.debug("TrackHelper: waiting for RC warmup")
             self._ready_start_time = datetime.now()
             return False
 
         diff = datetime.now() - self._ready_start_time
 
         if diff.total_seconds() < self._wait_period:
-            Logger.info("TrackHelper: waiting for RC warmup")
+            Logger.debug("TrackHelper: waiting for RC warmup")
             return False
 
         if not self._tracks_loaded or not self.rc_config.trackConfig:
@@ -159,7 +159,7 @@ class TrackHelper(EventDispatcher):
             else:
                 Logger.info("TrackHelper: no track found")
         else:
-            Logger.info("TrackHelper: RC track detected or GPS not ready for track detection")
+            Logger.debug("TrackHelper: RC track detected or GPS not ready for track detection")
 
 
 
