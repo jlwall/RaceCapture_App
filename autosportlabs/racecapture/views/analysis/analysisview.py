@@ -36,6 +36,7 @@ from autosportlabs.racecapture.views.analysis.analysisdata import CachingAnalysi
 from autosportlabs.racecapture.views.analysis.analysismap import AnalysisMap
 from autosportlabs.racecapture.views.analysis.channelvaluesview import ChannelValuesView
 from autosportlabs.racecapture.views.analysis.addstreamview import AddStreamView
+from autosportlabs.racecapture.views.analysis.fixsessionview import FixSessionView
 from autosportlabs.racecapture.views.analysis.sessionbrowser import SessionBrowser
 from autosportlabs.racecapture.views.analysis.flyinpanel import FlyinPanel
 from autosportlabs.racecapture.views.analysis.markerevent import MarkerEvent, SourceRef
@@ -46,6 +47,7 @@ from autosportlabs.racecapture.views.util.alertview import alertPopup
 from autosportlabs.uix.color.colorsequence import ColorSequence
 from autosportlabs.racecapture.theme.color import ColorScheme
 from autosportlabs.help.helpmanager import HelpInfo
+from autosportlabs.racecapture.datastore.datastore import Filter
 import traceback
 
 ANALYSIS_VIEW_KV = 'autosportlabs/racecapture/views/analysis/analysisview.kv'
@@ -155,14 +157,30 @@ class AnalysisView(Screen):
         self.stream_connecting = False
         self._dismiss_popup()
         self.ids.sessions_view.refresh_session_list()
+
+        self._check_laps(new_session_id)
         self.check_load_suggested_lap(new_session_id)
+
+    def _check_laps(self, session_id):
+        laps = self._datastore.get_laps(session_id)
+
+        # Find unique laptimes
+        laptimes = {lap.lap_time for lap in laps}
+        Logger.info("AnalysisView: found these laps {}".format(laptimes))
+
+        if len(laptimes) == 0 or (len(laptimes) == 1 and laptimes[0] == 0) or (None in laptimes and 0 in laptimes and len(laptimes) == 2):
+            Logger.info("AnalysisView: no good laptimes, prompting to fix")
+            # No laps! Prompt to fix
+            content = FixSessionView(session_id, self._datastore, self._settings)
+            popup = Popup(title="Fix log file", content=content, size_hint=(0.7, 0.7))
+            popup.open()
 
     # The following selects a best lap if there are no other laps currently selected
     def check_load_suggested_lap(self, new_session_id):
         sessions_view = self.ids.sessions_view
         if len(sessions_view.selected_laps) == 0:
             best_lap = self._datastore.get_channel_min('LapTime', [new_session_id], ['LapCount'])
-            if best_lap:
+            if best_lap[0]:
                 best_lap_id = best_lap[1]
                 Logger.info('AnalysisView: Convenience selected a suggested session {} / lap {}'.format(new_session_id, best_lap_id))
                 main_chart = self.ids.mainchart
