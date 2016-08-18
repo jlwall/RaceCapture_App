@@ -32,12 +32,12 @@ TRACK_CONFIG_VIEW_KV = 'autosportlabs/racecapture/views/configuration/rcp/trackc
 SIMPLE_TRACK_CONFIG_VIEW = """
 <SimpleTrackConfigView>:
     GridLayout:
-        spacing: [0, dp(20)]
-        padding: dp(20)
+        spacing: [0, dp(10)]
+        padding: dp(10)
         id: content
         cols: 1
         GridLayout:
-            size_hint_y: 0.4
+            size_hint_y: 0.3
             cols: 1
             SettingsView:
                 id: current_track
@@ -45,19 +45,6 @@ SIMPLE_TRACK_CONFIG_VIEW = """
             SettingsView:
                 id: custom_start_finish
                 label_text: 'Custom start/finish'
-        GridLayout:
-            id: custom
-            canvas.before:
-                Color:
-                    rgba: 0.1, 0.1, 0.1, 1.0
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            row_default_height: root.height * 0.12
-            row_force_default: True
-            size_hint_y: 1
-            cols: 1
-
 """
 
 GPS_STATUS_POLL_INTERVAL = 1.0
@@ -504,13 +491,8 @@ class SimpleTrackConfigView(BaseConfigView):
         self._manual_track_config_view = None
         self._old_track_id = None
 
-        start_line = SectorPointView(databus=self._databus)
-        start_line.set_point(GeoPoint())
-        start_line.setTitle("Start/Finish")
-        start_line.bind(on_config_changed=self._on_custom_change)
-        self.ids.custom.add_widget(start_line)
-
-        self._start_line = start_line
+        self._manual_track_config_view = ManualTrackConfigScreen(databus=self._databus)
+        self.ids.content.add_widget(self._manual_track_config_view)
 
     def on_set_track_press(self, instance):
         content = TrackSelectView(self._track_manager)
@@ -543,11 +525,6 @@ class SimpleTrackConfigView(BaseConfigView):
                 if self._track_config.track.trackId > 0:
                     self._old_track_id = self._track_config.track.trackId
 
-            track = Track()
-            track.trackId = 0
-            track.startLine = self._start_line.point
-
-            self._track_config.track = track
             self._track_config.stale = True
             self.dispatch('on_modified')
 
@@ -571,10 +548,6 @@ class SimpleTrackConfigView(BaseConfigView):
             else:
                 self.ids.current_track.label_text = 'Track: Unknown'
 
-                track = Track()
-                track.trackId = -1
-                track.startLine = GeoPoint()
-
             self._track_config.track = track
             self._track_config.stale = True
             self.dispatch('on_modified')
@@ -582,16 +555,6 @@ class SimpleTrackConfigView(BaseConfigView):
 
     def _on_custom_change(self, *args):
         Logger.info("TempTrackConfig: on_custom_modified: {}".format(args))
-
-        if self._track_config:
-            # Get point, use it to set custom start/finish
-            track = Track()
-            track.trackId = 0
-            track.startLine = self._start_line.point
-
-            self._track_config.track = track
-            self._track_config.stale = True
-            self.dispatch('on_modified')
 
     def on_config_updated(self, rcp_config):
         self._track_config = rcp_config.trackConfig
@@ -611,5 +574,4 @@ class SimpleTrackConfigView(BaseConfigView):
             self.ids.current_track.label_text = 'Track: ' + track_name
         elif rcp_config.trackConfig.track.trackId == 0:
             Logger.info("TempTrackConfig: custom start/finish: {}".format(rcp_config.trackConfig.track.startLine.toJson()))
-            self._start_line.set_point(rcp_config.trackConfig.track.startLine)
-            self.ids.custom_start_finish.setValue(True)
+        self._manual_track_config_view.on_config_updated(rcp_config)
