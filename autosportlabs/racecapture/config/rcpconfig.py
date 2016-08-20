@@ -5,7 +5,7 @@ from kivy.logger import Logger
 from distutils.version import StrictVersion
 
 RCP_COMPATIBLE_MAJOR_VERSION = 2
-RCP_MINIMUM_MINOR_VERSION = 8
+RCP_MINIMUM_MINOR_VERSION = 10
 
 class BaseChannel(object):
     def __init__(self, **kwargs):
@@ -1157,7 +1157,10 @@ class Capabilities(object):
 
     @property
     def has_streaming(self):
-        return 'telemstream' in self.flags
+        if self.flags:
+            return 'telemstream' in self.flags
+        else:
+            return False
 
     def from_json_dict(self, json_dict, version_config=None):
         if json_dict:
@@ -1177,7 +1180,8 @@ class Capabilities(object):
             if storage:
                 self.storage.from_json_dict(storage)
 
-            self.links.from_flags(self.flags)
+            if self.flags:
+                self.links.from_flags(self.flags)
 
         # For select features/capabilities we need to check RCP version because
         # the capability wasn't added to the API. Not ideal, but let's at least
