@@ -35,6 +35,10 @@
     ImuMappingSpinner:
     	rcid: 'mapping'
     	on_text: root.on_mapping(*args)
+    FloatValueField:
+        rcid: 'alpha'
+        text: '1.00'
+        on_text: root.on_alpha_value(*args)
     IntegerValueField:
     	rcid: 'zeroValue'
         text: ''
@@ -80,6 +84,8 @@
             text: 'Orientation'
         HSeparatorMinor:
             text: 'Mapping'
+        HSeparatorMinor:
+            text: 'Filter'
         HSeparatorMinor:
             text: 'Zero Level'
     ScrollContainer:
