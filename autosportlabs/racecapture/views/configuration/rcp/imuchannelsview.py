@@ -76,11 +76,17 @@ class ImuChannel(BoxLayout):
         disabled = not enabled
         kvFind(self, 'rcid', 'orientation').disabled = disabled
         kvFind(self, 'rcid', 'mapping').disabled = disabled
+        kvFind(self, 'rcid', 'alpha').disabled = disabled
         kvFind(self, 'rcid', 'zeroValue').disabled = disabled
 
     def on_zero_value(self, instance, value):
         if self.channelConfig:
             self.channelConfig.zeroValue = int(value)
+            self.notify_modified()
+            
+    def on_alpha_value(self, instance, value):
+        if self.channelConfig:
+            self.channelConfig.alpha = int(value)
             self.notify_modified()
 
     def on_orientation(self, instance, value):
@@ -127,6 +133,8 @@ class ImuChannel(BoxLayout):
 
         mapping.setFromValue(channelConfig.chan)
         
+        alpha = kvFind(self, 'rcid', 'alpha')
+        alpha.text = str(channelConfig.alpha)
             
         zeroValue = kvFind(self, 'rcid', 'zeroValue')
         zeroValue.text = str(channelConfig.zeroValue)
