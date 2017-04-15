@@ -72,7 +72,15 @@ class AnalogChannel(BaseChannelView):
                 self.dispatch('on_modified', self.channelConfig)
         except:
             pass
-            
+
+    def on_alpha_map_value(self, instance, value):
+        try:
+            if self.channelConfig:
+                self.channelConfig.alpha = float(value)
+                self.channelConfig.stale = True
+                self.dispatch('on_modified', self.channelConfig)
+        except:
+            pass
                     
     def on_scaling_type_raw(self, instance, value):
         if self.channelConfig and value:
@@ -115,6 +123,7 @@ class AnalogChannel(BaseChannelView):
             check_mapped.active = True
         
         self.ids.linearscaling.text = str(channelConfig.linearScaling)
+        self.ids.alpha.text = str(channelConfig.alpha)
         map_editor = self.ids.map_editor
         map_editor.on_config_changed(channelConfig.scalingMap)
         map_editor.bind(on_map_updated=self.on_map_updated)
