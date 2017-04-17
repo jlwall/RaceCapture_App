@@ -52,7 +52,7 @@ class ImuMappingSpinner(MappedSpinner):
             self.setValueMap({0:'X', 1:'Y', 2:'Z'}, default)
         elif imuType == 'gyro':
             self.setValueMap({3:'Yaw', 4:'Pitch', 5:'Roll'}, default)
-        
+
 class ImuChannel(BoxLayout):
     channelConfig = None
     channelLabels = []
@@ -63,7 +63,7 @@ class ImuChannel(BoxLayout):
         # State to track if we're in the process of updating the UI values and we should
         # ignore modified events that are fired by them as we change their values.
         self._updating = False
-    
+
     def on_modified(self):
         pass
 
@@ -83,11 +83,23 @@ class ImuChannel(BoxLayout):
         if self.channelConfig:
             self.channelConfig.zeroValue = int(value)
             self.notify_modified()
-            
+
     def on_alpha_value(self, instance, value):
-        if self.channelConfig:
-            self.channelConfig.alpha = int(value)
-            self.notify_modified()
+        try:
+            if self.channelConfig:
+                if  float(value) > 1:
+                    value = 1
+                    alpha = kvFind(self, 'rcid', 'alpha')
+                    alpha.text = str(value)
+                elif float(value) < 0:
+                    value = 0
+                    alpha = kvFind(self, 'rcid', 'alpha')
+                    alpha.text = str(value)
+                self.channelConfig.alpha = float(value)
+                self.channelConfig.stale = True
+                self.notify_modified()
+        except:
+            pass
 
     def on_orientation(self, instance, value):
         if self.channelConfig and value:
@@ -132,10 +144,10 @@ class ImuChannel(BoxLayout):
             mapping.setImuType('gyro', channelConfig.chan)
 
         mapping.setFromValue(channelConfig.chan)
-        
+
         alpha = kvFind(self, 'rcid', 'alpha')
         alpha.text = str(channelConfig.alpha)
-            
+
         zeroValue = kvFind(self, 'rcid', 'zeroValue')
         zeroValue.text = str(channelConfig.zeroValue)
         self.channelConfig = channelConfig
@@ -168,7 +180,7 @@ class ImuChannelsView(BaseConfigView):
             container.add_widget(editor)
             editor.bind(on_modified=self.on_modified)
             editors.append(editor)
-    
+
     def on_calibrate(self):
         # First check if config was updated and prompt
 
@@ -181,7 +193,7 @@ class ImuChannelsView(BaseConfigView):
             alertPopup("Warning", "Accel configuration has been modified, write config first, then calibrate.")
         else:
             self.rc_api.calibrate_imu(self.on_calibrate_win, self.on_calibrate_fail)
-        
+
     def on_calibrate_win(self, result):
         alertPopup('Calibration', 'Calibration Complete')
         # Re-read just imu config
@@ -197,7 +209,7 @@ class ImuChannelsView(BaseConfigView):
 
     def on_calibrate_fail(self, result):
         alertPopup('Calibration', 'Calibration Failed:\n\n' + str(result))
-        
+
     def on_sample_rate(self, instance, value):
         if self.imu_cfg:
             for imuChannel in self.imu_cfg.channels:

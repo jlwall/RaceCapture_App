@@ -28,7 +28,7 @@
     BoxLayout:
         orientation: 'horizontal'
         spacing: dp(5)
-        BoxLayout: 
+        BoxLayout:
             spacing: dp(5)
             orientation: 'vertical'
             HSeparator:
@@ -38,8 +38,16 @@
             	channel_type: 2
             SampleRateSelectorView:
                 id: sr
-            Label:
-                size_hint: (None, 1.0)
+            GridLayout:
+                cols: 2
+                FieldLabel:
+                    text: 'Alpha'
+                    font_size: sp(20)
+                    halign: 'right'
+                FloatValueField:
+                    id: alpha
+                    on_text: root.on_alpha_map_value(*args)
+                    halign: 'left'
         BoxLayout:
             spacing: dp(5)
             orientation: 'vertical'

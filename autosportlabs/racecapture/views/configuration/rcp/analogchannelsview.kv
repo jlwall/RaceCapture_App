@@ -42,7 +42,7 @@
             size_hint: (1.0, 0.2)
             cols: 2
             FieldLabel:
-                text: 'Filter'
+                text: 'Alpha'
                 font_size: sp(17)
                 halign: 'right'
                 size_hint: (1.0,0.3)
@@ -75,7 +75,7 @@
                 on_active: root.on_scaling_type_linear(*args)
 			FloatValueField:
 				id: linearscaling
-				on_text: root.on_linear_map_value(*args)	
+				on_text: root.on_linear_map_value(*args)
 	        FieldLabel:
 	        	text: 'Mapped'
 	        	font_size: sp(17)
@@ -84,7 +84,7 @@
 	        	group: 'scalingType'
                 id: smMapped
                 on_active: root.on_scaling_type_map(*args)
-			Label:               
+			Label:
     VSeparator:
     BoxLayout:
         orientation: 'vertical'
@@ -93,7 +93,7 @@
             text: 'Calibration'
         AnalogScalingMapEditor:
             id: map_editor
- 
+
 <AnalogScaler>:
     id: graph
     xlabel: 'Volts'
@@ -112,7 +112,7 @@
     orientation: 'vertical'
     BoxLayout:
         size_hint: (1.0, 0.6)
-		id: graphcontainer    	
+		id: graphcontainer
     	orientation: 'vertical'
     GridLayout:
         cols: 6
